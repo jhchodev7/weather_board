@@ -15,16 +15,25 @@ module.exports = async (req, res) => {
     });
   }
 
-  // 1) 그 지역 일정 (Supabase wx_tasks)
+  // 1) 그 지역 일정 (Supabase wx_tasks) – 실패 원인은 알려 주되 키 값은 넣지 않음
+  const dbError = detail => {
+    console.error('[api/kma] 일정 DB 읽기 실패', detail);
+    return res.status(502).json({ error: '일정 DB를 읽지 못했습니다.', ...detail });
+  };
+  const supaUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const supaKey = (process.env.SUPABASE_ANON_KEY || '').trim();
+  const missing = [!supaUrl && 'SUPABASE_URL', !supaKey && 'SUPABASE_ANON_KEY'].filter(Boolean);
+  if (missing.length) return dbError({ missing, hint: 'Vercel 환경변수를 추가한 뒤 Redeploy 하세요.' });
+
   let tasks;
   try {
-    const url = process.env.SUPABASE_URL + '/rest/v1/wx_tasks'
+    const url = supaUrl + '/rest/v1/wx_tasks'
       + '?select=title,kind,owner&order=id&region=eq.' + encodeURIComponent(region.name);
-    const r = await fetch(url, { headers: { apikey: process.env.SUPABASE_ANON_KEY } });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const r = await fetch(url, { headers: { apikey: supaKey } });
+    if (!r.ok) return dbError({ status: r.status, hint: r.status === 401 ? 'SUPABASE_ANON_KEY 값을 확인하세요.' : 'Supabase 응답 오류' });
     tasks = await r.json();
   } catch (err) {
-    return res.status(502).json({ error: '일정 DB를 읽지 못했습니다. (Vercel 환경변수 SUPABASE_URL · SUPABASE_ANON_KEY 확인)' });
+    return dbError({ reason: String(err && err.message), hint: 'SUPABASE_URL 형식(https://xxxx.supabase.co)을 확인하세요.' });
   }
 
   // 2) 오늘 날씨 (기상청 단기예보) – 실패해도 일정은 돌려줌
