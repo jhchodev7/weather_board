@@ -67,7 +67,24 @@ function addTask(e) {
   renderTasks();
 }
 
+// 지역별 날씨를 받아 표를 다시 그림 (실패해도 목록은 그대로)
+async function loadWeather() {
+  const box = document.getElementById('weatherBox');
+  try {
+    const res = await fetch(buildWeatherUrl(REGIONS));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const mode = new URLSearchParams(location.search).get('test');
+    weatherByRegion = applyTestMode(parseWeather(await res.json(), REGIONS), mode);
+    box.textContent = '오늘 날씨 (최고 기온 · 최대 풍속 · 강수확률, Open-Meteo)'
+      + (mode === 'wind' ? ' – 시험 모드: 풍속 12m/s' : '');
+  } catch (err) {
+    box.textContent = '날씨를 불러오지 못했습니다. 판단은 날씨 확인 전으로 표시합니다.';
+  }
+  renderTasks();
+}
+
 document.getElementById('taskForm').addEventListener('submit', addTask);
 renderToday();
 loadTasks();
 renderTasks();
+loadWeather();
