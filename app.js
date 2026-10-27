@@ -1,21 +1,25 @@
 // app.js – 화면 동작 (목록 그리기, 일정 추가)
 
-// 01 단원 : 일정 목록을 코드 안에 둠 (가상 데이터) → 04 단원에서 data/tasks.json 으로 분리
-const SAMPLE_TASKS = [
-  { title: '다중이용시설 안전점검', region: '세종', kind: '야외', owner: '김안전' },
-  { title: '시민 안전체험 행사 운영', region: '보령', kind: '야외', owner: '이행사' },
-  { title: '옥상 태양광 설비 점검', region: '태안', kind: '고소', owner: '박설비' },
-  { title: '하천 수위계 확인', region: '대전', kind: '야외', owner: '최현장' },
-  { title: '청사 외벽 간판 보수', region: '세종', kind: '고소', owner: '정시설' },
-  { title: '비상연락 훈련', region: '대전', kind: '실내', owner: '한상황' },
-];
-
+let baseTasks = [];         // data/tasks.json 에서 읽은 기본 일정
+let baseLoadFailed = false; // 더블클릭(file://)으로 열면 JSON을 못 읽음
 let tasks = [];
 let weatherByRegion = {};   // 03 단원에서 지역별 날씨를 넣음
 
+// 기본 일정을 JSON 파일에서 한 번 읽음
+async function loadBaseTasks() {
+  try {
+    const res = await fetch('data/tasks.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    baseTasks = await res.json();
+  } catch (err) {
+    baseLoadFailed = true;
+  }
+}
+
+// JSON 일정 먼저, 화면에서 추가한 일정(브라우저 저장)은 그 뒤에
 function loadTasks() {
   const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
-  tasks = SAMPLE_TASKS.concat(saved);
+  tasks = baseTasks.concat(saved);
 }
 
 // 오늘 날짜를 YYYY-MM-DD 로 (PC 시계 기준 현지 날짜)
@@ -33,6 +37,15 @@ function weatherText(w) {
 function renderTasks() {
   const body = document.getElementById('taskList');
   body.innerHTML = '';
+  if (baseLoadFailed) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.className = 'stop';
+    td.textContent = '일정 파일을 읽지 못했습니다. 배포 주소로 열어 주세요.';
+    tr.appendChild(td);
+    body.appendChild(tr);
+  }
   for (const t of tasks) {
     const w = weatherByRegion[t.region];
     const r = judge(t.kind, w);
@@ -85,6 +98,8 @@ async function loadWeather() {
 
 document.getElementById('taskForm').addEventListener('submit', addTask);
 renderToday();
-loadTasks();
-renderTasks();
 loadWeather();
+loadBaseTasks().then(() => {
+  loadTasks();
+  renderTasks();
+});
