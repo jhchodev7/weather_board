@@ -16,6 +16,7 @@
 - app.js     : 화면 동작 (목록 그리기, 일정 추가)
 - config.js  : Supabase 연결 정보 두 줄 (주소 · 공개용 키)
 - setup.sql  : Supabase 표 만들기 (SQL Editor에서 직접 실행)
+- api/kma.js : Vercel 서버 함수 (/api/kma?region=지역 → 일정 · 날씨 · 판단 JSON)
 - PRD.md · CLAUDE.md · README.md : 문서
 
 ## 작업 방식
@@ -29,3 +30,4 @@
 - 연결 정보는 config.js 에 주소 · 공개용 키(anon · publishable)만 쓴다. 비밀 키(service_role · sb_secret_)는 절대 쓰지 않는다.
 - 사용자가 입력한 글자는 textContent 로 표시한다.
 - 비밀 키는 코드 · 채팅 · GitHub 에 넣지 않는다.
+- 서버용 키(KMA_KEY 등)는 Vercel 환경변수에만 두고, 응답 · 로그에 넣지 않는다.
