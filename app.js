@@ -18,6 +18,14 @@ function loadTasks() {
   tasks = SAMPLE_TASKS.concat(saved);
 }
 
+// 오늘 날짜를 YYYY-MM-DD 로 (PC 시계 기준 현지 날짜)
+function renderToday() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('todayDate').textContent =
+    d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
 function weatherText(w) {
   return w ? w.tempMax + '℃ · ' + w.windMax + 'm/s · ' + w.rainProb + '%' : '-';
 }
@@ -60,5 +68,6 @@ function addTask(e) {
 }
 
 document.getElementById('taskForm').addEventListener('submit', addTask);
+renderToday();
 loadTasks();
 renderTasks();
