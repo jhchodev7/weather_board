@@ -23,11 +23,14 @@ function loadTasks() {
 }
 
 // 오늘 날짜를 YYYY-MM-DD 로 (PC 시계 기준 현지 날짜)
-function renderToday() {
+function todayText() {
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
-  document.getElementById('todayDate').textContent =
-    d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+function renderToday() {
+  document.getElementById('todayDate').textContent = todayText();
 }
 
 function weatherText(w) {
@@ -96,7 +99,23 @@ async function loadWeather() {
   renderTasks();
 }
 
+// 지금 표를 md 파일로 내려받음
+function saveMarkdown() {
+  const rows = tasks.map(t => {
+    const w = weatherByRegion[t.region];
+    return [t.title, t.region, t.kind, t.owner, weatherText(w), judge(t.kind, w).text];
+  });
+  const md = buildJudgeMarkdown(todayText(), rows);
+  const url = URL.createObjectURL(new Blob([md], { type: 'text/markdown;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '현장일정_판단_' + todayText() + '.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 document.getElementById('taskForm').addEventListener('submit', addTask);
+document.getElementById('saveMdBtn').addEventListener('click', saveMarkdown);
 renderToday();
 loadWeather();
 loadBaseTasks().then(() => {

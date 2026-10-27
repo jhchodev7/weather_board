@@ -54,4 +54,20 @@ function applyTestMode(weather, mode) {
   return result;
 }
 
-if (typeof module !== 'undefined') module.exports = { RULES, judge, REGIONS, buildWeatherUrl, parseWeather, applyTestMode };
+// 오늘 판단을 마크다운으로 (rows: [일정, 지역, 구분, 담당, 날씨, 판단] 글자 배열들)
+function buildJudgeMarkdown(dateText, rows) {
+  const cell = v => String(v).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+  const lines = [
+    '# 현장 일정 판단 (' + dateText + ')',
+    '',
+    '| 일정 | 지역 | 구분 | 담당 | 날씨 | 판단 |',
+    '|---|---|---|---|---|---|',
+  ];
+  for (const r of rows) lines.push('| ' + r.map(cell).join(' | ') + ' |');
+  lines.push('');
+  lines.push("판단 기준: 고소 일정 최대 풍속 " + RULES.wind + " m/s 이상 '중지 검토' · 강수확률 "
+    + RULES.rain + "% 이상 '우천 주의' · 최고 기온 " + RULES.heat + "℃ 이상 '폭염 휴식' (교육용 가상 기준)");
+  return lines.join('\n') + '\n';
+}
+
+if (typeof module !== 'undefined') module.exports = { RULES, judge, REGIONS, buildWeatherUrl, parseWeather, applyTestMode, buildJudgeMarkdown };
